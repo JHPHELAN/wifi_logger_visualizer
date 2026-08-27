@@ -1,6 +1,6 @@
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, LogInfo
+from launch.actions import DeclareLaunchArgument, LogInfo, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
@@ -44,10 +44,24 @@ def generate_launch_description():
                                ", run_heatmapper: ", run_heatmapper]))
 
     # Declare launch arguments for nodes:
+    # NOTE: db_path defaults to '' (unset) so the YAML config's db_path wins.
+    # In parameters=[config_filepath, {...}], any key present in the dict
+    # overrides the same key from the YAML. When the CLI does not pass
+    # db_path:=..., we must NOT put db_path in the override dict, or the
+    # YAML absolute pin is silently discarded and the node opens
+    # <cwd>/wifi_data.db instead. This matches the pattern already used in
+    # heat_mapper.launch.py.
     db_path_arg = DeclareLaunchArgument(
         'db_path',
-        default_value=os.path.join(os.getcwd(), 'wifi_data.db'),
-        description='Path to the SQLite database file'
+        default_value='',
+        description='Optional SQLite DB path override (defaults to YAML value)'
+    )
+
+    # Same empty-default pattern as db_path: '' means "leave YAML alone".
+    db_clear_on_start_arg = DeclareLaunchArgument(
+        'db_clear_on_start',
+        default_value='',
+        description="Optional bool override: 'true' or 'false'. Empty defers to YAML."
     )
     
     publish_frequency_arg = DeclareLaunchArgument(
@@ -94,6 +108,7 @@ def generate_launch_description():
 
     for action in [
         db_path_arg,
+        db_clear_on_start_arg,
         publish_frequency_arg,
         db_check_frequency_arg,
         max_interpolation_distance_arg,
@@ -104,59 +119,72 @@ def generate_launch_description():
     ]:
         ld.add_action(action)
     
-    wifi_loger_node = Node(
-        condition=IfCondition(run_logger),
-        package=package_name,
-        executable='wifi_logger_node.py',
-        name='wifi_logger_node',
-        parameters=[
-            config_filepath,
-            {
-                'db_path': LaunchConfiguration('db_path'),
-            }
-        ],
-        # arguments=['--ros-args', '--log-level', 'DEBUG'],
-        output='screen'
-    )
-    ld.add_action(wifi_loger_node)
+    # db_path resolution: when the user did not pass db_path:=..., the
+    # LaunchConfiguration resolves to '' (see db_path_arg default above),
+    # and we omit db_path from the override dict so the YAML wins. When
+    # the user did pass a path, we include it so CLI wins over YAML.
+    def _build_nodes(context):
+        db_path = LaunchConfiguration('db_path').perform(context)
+        db_override = {'db_path': db_path} if db_path else {}
 
-    wifi_visualizer_node = Node(
-        condition=IfCondition(run_visualizer),
-        package=package_name,
-        executable='wifi_visualizer_node.py',
-        name='wifi_visualizer_node',
-        output='screen',
-        parameters=[
-            config_filepath,
-            {
-                'db_path': LaunchConfiguration('db_path'),
-                'publish_frequency': LaunchConfiguration('publish_frequency'),
-                'db_check_frequency': LaunchConfiguration('db_check_frequency'),
-                'max_interpolation_distance': LaunchConfiguration('max_interpolation_distance'),
-                'enable_link_quality': LaunchConfiguration('enable_link_quality'),
-                'enable_signal_level': LaunchConfiguration('enable_signal_level'),
-                'enable_bit_rate': LaunchConfiguration('enable_bit_rate'),
-                'costmap_topic': LaunchConfiguration('costmap_topic')
-            }
-        ]
-    )
-    ld.add_action(wifi_visualizer_node)
+        db_clear_str = LaunchConfiguration('db_clear_on_start').perform(context).strip().lower()
+        if db_clear_str in ('true', '1', 'yes', 'on'):
+            db_override['db_clear_on_start'] = True
+        elif db_clear_str in ('false', '0', 'no', 'off'):
+            db_override['db_clear_on_start'] = False
 
-    heat_mapper_node = Node(
-        condition=IfCondition(run_heatmapper),
-        package=package_name,
-        executable='heat_mapper_node.py',
-        name='heat_mapper_node',
-        output='screen',
-        parameters=[
-            config_filepath,
-            {
-                'db_path': LaunchConfiguration('db_path'),
-                'costmap_topic': LaunchConfiguration('costmap_topic')
-            }
-        ]
-    )
-    ld.add_action(heat_mapper_node)
+        wifi_loger_node = Node(
+            condition=IfCondition(run_logger),
+            package=package_name,
+            executable='wifi_logger_node.py',
+            name='wifi_logger_node',
+            parameters=[
+                config_filepath,
+                db_override,
+            ],
+            # arguments=['--ros-args', '--log-level', 'DEBUG'],
+            output='screen'
+        )
+
+        wifi_visualizer_node = Node(
+            condition=IfCondition(run_visualizer),
+            package=package_name,
+            executable='wifi_visualizer_node.py',
+            name='wifi_visualizer_node',
+            output='screen',
+            parameters=[
+                config_filepath,
+                {
+                    **db_override,
+                    'publish_frequency': LaunchConfiguration('publish_frequency'),
+                    'db_check_frequency': LaunchConfiguration('db_check_frequency'),
+                    'max_interpolation_distance': LaunchConfiguration('max_interpolation_distance'),
+                    'enable_link_quality': LaunchConfiguration('enable_link_quality'),
+                    'enable_signal_level': LaunchConfiguration('enable_signal_level'),
+                    'enable_bit_rate': LaunchConfiguration('enable_bit_rate'),
+                    'costmap_topic': LaunchConfiguration('costmap_topic')
+                }
+            ]
+        )
+
+        heat_mapper_node = Node(
+            condition=IfCondition(run_heatmapper),
+            package=package_name,
+            executable='heat_mapper_node.py',
+            name='heat_mapper_node',
+            output='screen',
+            parameters=[
+                config_filepath,
+                {
+                    **db_override,
+                    'costmap_topic': LaunchConfiguration('costmap_topic')
+                }
+            ]
+        )
+
+        return [wifi_loger_node, wifi_visualizer_node, heat_mapper_node]
+
+    ld.add_action(OpaqueFunction(function=_build_nodes))
 
 
     return ld
