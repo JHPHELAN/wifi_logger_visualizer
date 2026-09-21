@@ -6,12 +6,13 @@
     # Kept out of the git source tree; ~/wifi_logs/ is where drive-log CSVs and
     # DB backups already live.
     db_path: "/home/ubuntu/wifi_logs/wifi_data.db"
-    db_clear_on_start: true  # Clear existing records from the database when the logger starts
+    db_clear_on_start: false  # Clear existing records from the database when the logger starts
     # LOCAL OVERRIDE (do not upstream): pin to the USB WiFi adapter.
     # Since the 2026-07-08 route-metric change, wlan0 (Pi 5 built-in) may
     # sit un-associated (ESSID:off/any) and auto-detect picks it, causing
     # iwconfig to return None and crash publish (Float32MultiArray rejects None).
-    wifi_interface: "wlx90de801012a6"
+    # wlxUSB = persistent name for the Realtek RTL8812BU dongle (was wlx90de801012a6).
+    wifi_interface: "wlxUSB"
     update_interval: 1.0
     grid_density: 1     # rounding factor for x,y,z coordinates, 1 means 0.1 meter grid (usually indoors), 0 means 1 meter grid (usually outdoors)
     # LOCAL OVERRIDE (do not upstream): wider acceptance window than the

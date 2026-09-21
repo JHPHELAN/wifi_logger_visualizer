@@ -10,7 +10,7 @@ coverage in a home/office mesh before bringing up the ROS logger node.
 
 Per-second CSV logger. Captures BSSID / signal / bitrate / rx+tx byte
 counters for the built-in `wlan0` and one USB dongle (default
-`wlx90de801012a6`; override with `USB_IF=...`). Also records which
+`wlxUSB`; override with `USB_IF=...`). Also records which
 interface currently owns the default route and its metric.
 
 ```bash

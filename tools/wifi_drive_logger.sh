@@ -15,12 +15,13 @@
 #
 # Analyze with tools/plot_wifi_drive.py.
 #
-# NOTE: the USB interface name is hard-coded to `wlx90de801012a6` (the
-# specific dongle used on our robot). Change USB_IF below for a different
-# dongle, or set it via env: USB_IF=wlxABCDEF012345 bash wifi_drive_logger.sh
+# NOTE: the USB interface name is hard-coded to `wlxUSB` (the persistent
+# name pinned on our robot for the Realtek RTL8812BU dongle). Change
+# USB_IF below for a different dongle, or set it via env:
+#   USB_IF=wlxABCDEF012345 bash wifi_drive_logger.sh
 
 set -u
-USB_IF="${USB_IF:-wlx90de801012a6}"
+USB_IF="${USB_IF:-wlxUSB}"
 
 LOG="wifi_drive_$(date +%Y%m%d_%H%M%S).csv"
 echo "ts,default_iface,default_metric,wlan0_bssid,wlan0_signal,wlan0_bitrate,wlan0_rx,wlan0_tx,wlxUSB_bssid,wlxUSB_signal,wlxUSB_bitrate,wlxUSB_rx,wlxUSB_tx" > "$LOG"
