@@ -1,0 +1,13 @@
+# Stingray (Stormy) local overrides for wifi_logger_visualizer v2.
+# Loaded AFTER Mike's config/wifi_logger_config.yaml, so these values win.
+# Upstream (wimble) files are left pristine for clean `git pull wimble main`.
+/**:
+  ros__parameters:
+    db_path: "~/robot_logs/wifi/stingray_wifi.db"
+    map_yaml_path: "/home/ubuntu/robot_ws/src/articubot_one/assets/maps/Stormy_house_merged_20260426_080607.yaml"
+    wifi_interface: "wlxUSB"
+    cell_size: 0.25
+
+/wifi_survey_node:
+  ros__parameters:
+    target_host: "192.168.68.99"
