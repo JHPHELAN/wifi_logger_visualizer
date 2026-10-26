@@ -3,9 +3,9 @@
     use_gps: false  # Set false on robots without a GPS receiver (skips /gps/filtered sub + "GPS stale" warnings)
     # LOCAL OVERRIDE (do not upstream): absolute path so logger + heat_mapper +
     # visualizer all hit the SAME DB file regardless of the launcher's CWD.
-    # Kept out of the git source tree; ~/wifi_logs/ is where drive-log CSVs and
-    # DB backups already live.
-    db_path: "/home/ubuntu/wifi_logs/wifi_data.db"
+    # Kept out of the git source tree; ~/robot_logs/wifi/ is the unified
+    # field-data root (also holds drive-log CSVs and DB backups).
+    db_path: "/home/ubuntu/robot_logs/wifi/wifi_data.db"
     db_clear_on_start: false  # Clear existing records from the database when the logger starts
     # LOCAL OVERRIDE (do not upstream): pin to the USB WiFi adapter.
     # Since the 2026-07-08 route-metric change, wlan0 (Pi 5 built-in) may
@@ -37,7 +37,7 @@
 
 /wifi_visualizer_node:
   ros__parameters:
-    db_path: "/home/ubuntu/wifi_logs/wifi_data.db"  # LOCAL absolute pin
+    db_path: "/home/ubuntu/robot_logs/wifi/wifi_data.db"  # LOCAL absolute pin
     publish_frequency: 1.0
     db_check_frequency: 2.0
     max_interpolation_distance: 1.0
@@ -49,7 +49,7 @@
 /heat_mapper_node:
   ros__parameters:
     standalone: false
-    db_path: "/home/ubuntu/wifi_logs/wifi_data.db"  # LOCAL absolute pin
+    db_path: "/home/ubuntu/robot_logs/wifi/wifi_data.db"  # LOCAL absolute pin
     costmap_topic: "/global_costmap/costmap"
     do_publish_markers: true
     do_publish_text_markers: true
