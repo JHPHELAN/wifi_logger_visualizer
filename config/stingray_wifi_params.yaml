@@ -4,7 +4,7 @@
 /**:
   ros__parameters:
     db_path: "~/robot_logs/wifi/stingray_wifi.db"
-    map_yaml_path: "/home/ubuntu/robot_ws/src/articubot_one/assets/maps/Stormy_house_merged_20260426_080607.yaml"
+    map_yaml_path: "/home/ubuntu/robot_ws/src/articubot_one/assets/maps/Stormy_merged.yaml"
     wifi_interface: "wlxUSB"
     cell_size: 0.25
 
